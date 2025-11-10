@@ -6,6 +6,10 @@
   "author": "Erlend Mongstad",
   "type": "module",
   "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/eeerlend/flextable-next"
+  },
   "exports": {
     ".": "./index.js",
     "./client": "./client.js"
