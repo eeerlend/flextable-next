@@ -22,10 +22,12 @@ export const FlexTableHeader = ({
       setSortOrder("desc");
       setIsSorted(true);
     } else if (sortOrder === "desc") {
-      setVariables({
-        ...variables,
-        orderBy: { [sortField]: undefined },
-      });
+      // delete the sortField from the orderBy
+      const newOrderBy = { ...variables?.orderBy };
+      if (newOrderBy[sortField]) {
+        delete newOrderBy[sortField];
+      }
+      setVariables({ ...variables, orderBy: newOrderBy });
       setSortOrder(undefined);
       setIsSorted(false);
     } else {
