@@ -1,4 +1,3 @@
-"use client";
 export * from "./context/flexTableContext.js";
 export * from "./components/flextable/flexTable.js";
 export * from "./components/flextable/flexTableBody.js";

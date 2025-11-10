@@ -12,6 +12,7 @@ export const FlexTableProvider = ({
     NOT: "not",
   },
   useTranslations,
+  variant = "async",
   query,
 }) => {
   if (!query || typeof query !== "function") {
@@ -22,10 +23,15 @@ export const FlexTableProvider = ({
     throw new Error("The param 'useTranslations' must be a valid function");
   }
 
+  if (!variant || !["async", "static"].includes(variant)) {
+    throw new Error("The param 'variant' must be either 'async' or 'sync'");
+  }
+
   const [rows, setRows] = useState([]);
   const [pageInfo, setPageInfo] = useState({});
   const [totalCount, setTotalCount] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
+  const [allData, setAllData] = useState([]);
   const [error, setError] = useState(null);
   const [variables, setVariables] = useState({});
   const [batchSize, setBatchSize] = useState(defaultBatchSize);
@@ -79,9 +85,13 @@ export const FlexTableProvider = ({
     }
   };
 
-  useEffect(() => {
-    fetchData();
-  }, [query, variables]);
+  const fetchStaticData = async () => {
+    setIsLoading(true);
+    const data = await query();
+
+    const newAllData = data || [];
+    return newAllData;
+  };
 
   const onAddRow = (newRow) => {
     setRows((prevRows) => [newRow, ...prevRows]);
@@ -103,6 +113,34 @@ export const FlexTableProvider = ({
     setHasPreviousPage(pageInfo?.hasPreviousPage || currentSkip > 0);
     setHasNextPage(pageInfo?.hasNextPage);
   }, [pageInfo, currentSkip]);
+
+  const handleStaticData = async () => {
+    try {
+      let newAllData;
+      if (allData.length === 0) {
+        newAllData = await fetchStaticData();
+        setAllData(newAllData);
+      } else {
+        newAllData = allData;
+      }
+
+      setRows(newAllData);
+      setTotalCount(newAllData.length);
+    } catch (error) {
+      console.log("error", error);
+      setError(error.message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (variant === "async") {
+      fetchData();
+    } else {
+      handleStaticData();
+    }
+  }, [query, variables, variant]);
 
   return (
     <FlexTableContext.Provider

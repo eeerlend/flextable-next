@@ -1,9 +1,14 @@
 import { Table } from "../table/table";
 
-export const FlexTable = ({ children, className = "", compact = false }) => {
+export const FlexTable = ({
+  children,
+  className = "",
+  compact = false,
+  ...props
+}) => {
   const compactClass = compact ? "compact" : "";
   return (
-    <Table className={`relative ${className} ${compactClass}`}>
+    <Table className={`relative ${className} ${compactClass}`} {...props}>
       {children}
     </Table>
   );
