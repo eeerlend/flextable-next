@@ -4,15 +4,22 @@ import { createContext, useContext, useEffect, useState } from "react";
 const FlexTableContext = createContext();
 
 export const FlexTableProvider = ({
-  query,
-  children,
-  defaultVariables = {},
   defaultBatchSize = 25,
-  baseFilter = {},
-  baseOrderBy = {},
+  children,
+  filterOperators = {
+    AND: "and",
+    OR: "or",
+    NOT: "not",
+  },
+  useTranslations,
+  query,
 }) => {
   if (!query || typeof query !== "function") {
     throw new Error("The param 'query' must be a function");
+  }
+
+  if (!useTranslations || typeof useTranslations !== "function") {
+    throw new Error("The param 'useTranslations' must be a valid function");
   }
 
   const [rows, setRows] = useState([]);
@@ -20,45 +27,36 @@ export const FlexTableProvider = ({
   const [totalCount, setTotalCount] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [variables, setVariables] = useState(defaultVariables);
+  const [variables, setVariables] = useState({});
   const [batchSize, setBatchSize] = useState(defaultBatchSize);
   const [currentSkip, setCurrentSkip] = useState(0);
   const [hasNextPage, setHasNextPage] = useState(false);
   const [hasPreviousPage, setHasPreviousPage] = useState(false);
 
+  const populateFilter = () => {
+    let newFilter = variables?.filter || {};
+    if (newFilter && Object.keys(newFilter).length > 0) {
+      if (
+        newFilter[filterOperators.AND] &&
+        Array.isArray(newFilter[filterOperators.AND])
+      ) {
+        newFilter[filterOperators.AND].push(...newFilter[filterOperators.AND]);
+      } else {
+        newFilter = newFilter;
+      }
+    }
+    return newFilter;
+  };
+
   const fetchData = async () => {
     try {
-      const filter = { AND: [] };
-      // Add baseFilter - if it's already an AND array, spread it; otherwise wrap it
-      if (baseFilter && Object.keys(baseFilter).length > 0) {
-        if (baseFilter.AND && Array.isArray(baseFilter.AND)) {
-          filter.AND.push(...baseFilter.AND);
-        } else {
-          filter.AND.push(baseFilter);
-        }
-      }
-      // Add variables filter if it exists
-      if (variables?.filter) {
-        if (variables.filter.AND && Array.isArray(variables.filter.AND)) {
-          filter.AND.push(...variables.filter.AND);
-        } else {
-          filter.AND.push(variables.filter);
-        }
-      }
+      const newFilter = populateFilter();
 
-      // Build the full variables object with pagination params and merged filter
-      const queryVariables = {
+      const data = await query({
         ...variables,
-        filter: filter.AND.length > 0 ? filter : undefined,
+        filter: newFilter,
         first: variables?.first || batchSize,
-      };
-
-      // problem if orderBy is {createdAt: undefined} because it will be removed from the query
-      if (!queryVariables.orderBy) {
-        queryVariables.orderBy = baseOrderBy;
-      }
-
-      const data = await query(queryVariables);
+      });
 
       setRows(data?.nodes || []);
       setPageInfo(data?.pageInfo || {});
@@ -112,6 +110,7 @@ export const FlexTableProvider = ({
         batchSize,
         setBatchSize,
         error,
+        filterOperators,
         isLoading,
         pageInfo,
         rows,
@@ -125,6 +124,7 @@ export const FlexTableProvider = ({
         onDeleteRow,
         hasNextPage,
         hasPreviousPage,
+        useTranslations,
       }}
     >
       {children}

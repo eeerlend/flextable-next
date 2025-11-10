@@ -1,1 +1,21 @@
-export { FlexTableProvider, useFlexTable } from "./context/flexTableContext.js";
+"use client";
+export * from "./context/flexTableContext.js";
+export * from "./components/flextable/flexTable.js";
+export * from "./components/flextable/flexTableBody.js";
+export * from "./components/flextable/flexTableCell.js";
+export * from "./components/flextable/flexTableHead.js";
+export * from "./components/flextable/flexTableHeader.js";
+export * from "./components/flextable/flexTableRow.js";
+export * from "./components/flextable/flexTableWrapper.js";
+export * from "./components/flextable/flexTableLane.js";
+export * from "./components/flextable/flexTableModal.js";
+export * from "./components/flextable/flexTablePagination.js";
+export * from "./components/flextable/flexTableSearch.js";
+
+export * from "./components/table/table.js";
+export * from "./components/table/tableHead.js";
+export * from "./components/table/tableBody.js";
+export * from "./components/table/tableRow.js";
+export * from "./components/table/tableCell.js";
+export * from "./components/table/tableHeader.js";
+export * from "./components/table/tablePagination.js";
