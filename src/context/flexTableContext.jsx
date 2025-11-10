@@ -1,5 +1,11 @@
 "use client";
-import { createContext, useContext, useEffect, useState } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useState,
+} from "react";
 import { stringSimilarity } from "string-similarity-js";
 
 const FlexTableContext = createContext();
@@ -40,7 +46,6 @@ export const FlexTableProvider = ({
   const [hasPreviousPage, setHasPreviousPage] = useState(false);
   // Static data
   const [allData, setAllData] = useState([]);
-  const [filteredData, setFilteredData] = useState([]);
 
   const populateFilter = () => {
     let newFilter = variables?.filter || {};
@@ -57,7 +62,7 @@ export const FlexTableProvider = ({
     return newFilter;
   };
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     try {
       const newFilter = populateFilter();
 
@@ -86,7 +91,7 @@ export const FlexTableProvider = ({
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [query, variables, batchSize]);
 
   const stringComparison = (value, searchString) => {
     if (

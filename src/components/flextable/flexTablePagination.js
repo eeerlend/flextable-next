@@ -1,6 +1,6 @@
 "use client";
-import { useFlexTable } from "../../context/flexTableContext.js";
-import { TablePagination } from "../table/tablePagination.js";
+import { useFlexTable } from "../../context/flexTableContext";
+import { TablePagination } from "../table/tablePagination";
 
 export const FlexTablePagination = ({ className = "" }) => {
   const {

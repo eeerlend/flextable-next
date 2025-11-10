@@ -1,6 +1,6 @@
 "use client";
 import { MdNavigateBefore, MdNavigateNext } from "react-icons/md";
-import { useFlexTable } from "../../context/flexTableContext.js";
+import { useFlexTable } from "../../context/flexTableContext";
 
 export const TablePagination = ({
   className = "",
