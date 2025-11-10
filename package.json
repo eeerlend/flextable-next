@@ -1,0 +1,16 @@
+{
+  "name": "@eeerlend/flextable-next",
+  "version": "0.0.3",
+  "description": "A flexible table component for Next.js",
+  "license": "ISC",
+  "author": "Erlend Mongstad",
+  "type": "module",
+  "main": "index.js",
+  "exports": {
+    ".": "./index.js",
+    "./client": "./client.js"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  }
+}
