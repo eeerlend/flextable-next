@@ -4,6 +4,7 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useMemo,
   useState,
 } from "react";
 import { stringSimilarity } from "string-similarity-js";
@@ -42,25 +43,135 @@ export const FlexTableProvider = ({
   const [variables, setVariables] = useState({});
   const [batchSize, setBatchSize] = useState(defaultBatchSize);
   const [currentSkip, setCurrentSkip] = useState(0);
-  const [hasNextPage, setHasNextPage] = useState(false);
-  const [hasPreviousPage, setHasPreviousPage] = useState(false);
   // Static data
   const [allData, setAllData] = useState([]);
+  const [filteredData, setFilteredData] = useState([]);
 
-  const populateFilter = () => {
+  // Memoize filterOperators to prevent unnecessary re-renders
+  const memoizedFilterOperators = useMemo(
+    () => filterOperators,
+    [filterOperators]
+  );
+
+  const populateFilter = useCallback(() => {
     let newFilter = variables?.filter || {};
     if (newFilter && Object.keys(newFilter).length > 0) {
       if (
-        newFilter[filterOperators.AND] &&
-        Array.isArray(newFilter[filterOperators.AND])
+        newFilter[memoizedFilterOperators.AND] &&
+        Array.isArray(newFilter[memoizedFilterOperators.AND])
       ) {
-        newFilter[filterOperators.AND].push(...newFilter[filterOperators.AND]);
+        newFilter[memoizedFilterOperators.AND].push(
+          ...newFilter[memoizedFilterOperators.AND]
+        );
       } else {
         newFilter = newFilter;
       }
     }
     return newFilter;
-  };
+  }, [variables?.filter, memoizedFilterOperators.AND]);
+
+  const stringComparison = useCallback((value, searchString) => {
+    if (
+      value === null ||
+      value === undefined ||
+      searchString === null ||
+      searchString === undefined
+    ) {
+      return false;
+    }
+    if (String(value).toLowerCase().includes(searchString.toLowerCase())) {
+      return true;
+    }
+    const similarity = stringSimilarity(value, searchString);
+    return similarity > 0.6;
+  }, []);
+
+  const applyStaticFilter = useCallback(
+    (data, filter) => {
+      if (filter) {
+        return data.filter((item) => {
+          return filter.or.some((orFilter) => {
+            return Object.keys(orFilter).some((key) => {
+              const keys = key.split(".");
+              const value = keys.reduce((acc, key) => acc[key], item);
+              const searchString = orFilter[key]?.contains.toLowerCase();
+              return stringComparison(value, searchString);
+            });
+          });
+        });
+      }
+      return data;
+    },
+    [stringComparison]
+  );
+
+  const applyStaticSorting = useCallback((data, orderBy) => {
+    if (orderBy && Object.keys(orderBy).length > 0) {
+      const keyString = Object.keys(orderBy)[0];
+      const keys = keyString.split(".");
+
+      const direction = orderBy[keyString];
+      return [...data].sort((a, b) => {
+        const aValue = keys.reduce((acc, key) => acc[key], a);
+        const bValue = keys.reduce((acc, key) => acc[key], b);
+        return direction === "asc"
+          ? aValue > bValue
+            ? 1
+            : -1
+          : bValue > aValue
+          ? 1
+          : -1;
+      });
+    }
+    return data;
+  }, []);
+
+  const fetchStaticData = useCallback(async () => {
+    setIsLoading(true);
+    const data = await query();
+
+    const newAllData = data || [];
+    return newAllData;
+  }, [query]);
+
+  const handleStaticData = useCallback(async () => {
+    try {
+      let newAllData;
+      if (allData.length === 0) {
+        newAllData = await fetchStaticData();
+        setAllData(newAllData);
+      } else {
+        newAllData = allData;
+      }
+
+      setPageInfo({
+        hasPreviousPage: currentSkip > 0,
+        hasNextPage: currentSkip + batchSize < newAllData.length,
+      });
+
+      const sortedData = applyStaticSorting(newAllData, variables?.orderBy);
+      const newFilteredData = applyStaticFilter(sortedData, variables?.filter);
+
+      setRows(newFilteredData.slice(currentSkip, currentSkip + batchSize));
+
+      setFilteredData(newFilteredData);
+      setTotalCount(newFilteredData.length);
+    } catch (error) {
+      console.log("error", error);
+      setError(error.message);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [
+    allData,
+    currentSkip,
+    batchSize,
+    variables?.orderBy,
+    variables?.filter,
+    fetchStaticData,
+    applyStaticSorting,
+    applyStaticFilter,
+  ]);
 
   const fetchData = useCallback(async () => {
     try {
@@ -91,117 +202,54 @@ export const FlexTableProvider = ({
     } finally {
       setIsLoading(false);
     }
-  }, [query, variables, batchSize]);
+  }, [query, variables, batchSize, populateFilter]);
 
-  const stringComparison = (value, searchString) => {
-    if (
-      value === null ||
-      value === undefined ||
-      searchString === null ||
-      searchString === undefined
-    ) {
-      return false;
-    }
-    if (String(value).toLowerCase().includes(searchString.toLowerCase())) {
-      return true;
-    }
-    const similarity = stringSimilarity(value, searchString);
-    return similarity > 0.6;
-  };
-
-  const applyStaticFilter = (data, filter) => {
-    if (filter) {
-      return data.filter((item) => {
-        return filter.or.some((orFilter) => {
-          return Object.keys(orFilter).some((key) => {
-            const keys = key.split(".");
-            const value = keys.reduce((acc, key) => acc[key], item);
-            const searchString = orFilter[key]?.contains.toLowerCase();
-            return stringComparison(value, searchString);
-          });
-        });
-      });
-    }
-    return data;
-  };
-
-  const applyStaticSorting = (data, orderBy) => {
-    if (orderBy && Object.keys(orderBy).length > 0) {
-      const keyString = Object.keys(orderBy)[0];
-      const keys = keyString.split(".");
-
-      const direction = orderBy[keyString];
-      return [...data].sort((a, b) => {
-        const aValue = keys.reduce((acc, key) => acc[key], a);
-        const bValue = keys.reduce((acc, key) => acc[key], b);
-        return direction === "asc"
-          ? aValue > bValue
-            ? 1
-            : -1
-          : bValue > aValue
-          ? 1
-          : -1;
-      });
-    }
-    return data;
-  };
-
-  const handleStaticData = async () => {
-    try {
-      let newAllData;
-      if (allData.length === 0) {
-        newAllData = await fetchStaticData();
-        setAllData(newAllData);
-      } else {
-        newAllData = allData;
-      }
-
-      setPageInfo({
-        hasPreviousPage: currentSkip > 0,
-        hasNextPage: currentSkip + batchSize < newAllData.length,
-      });
-
-      const sortedData = applyStaticSorting(newAllData, variables?.orderBy);
-      const filteredData = applyStaticFilter(sortedData, variables?.filter);
-      setRows(filteredData.slice(currentSkip, currentSkip + batchSize));
-
-      setTotalCount(newAllData.length);
-    } catch (error) {
-      console.log("error", error);
-      setError(error.message);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const fetchStaticData = async () => {
-    setIsLoading(true);
-    const data = await query();
-
-    const newAllData = data || [];
-    return newAllData;
-  };
-
-  const onAddRow = (newRow) => {
+  const onAddRow = useCallback((newRow) => {
     setRows((prevRows) => [newRow, ...prevRows]);
     setTotalCount((prevTotal) => prevTotal + 1);
-  };
+  }, []);
 
-  const onEditRow = (editedRow) => {
+  const onEditRow = useCallback((editedRow) => {
     setRows((prevRows) =>
       prevRows.map((row) => (editedRow.id === row.id ? editedRow : row))
     );
-  };
+  }, []);
 
-  const onDeleteRow = (deletedRowId) => {
+  const onDeleteRow = useCallback((deletedRowId) => {
     setRows((prevRows) => prevRows.filter((row) => row.id !== deletedRowId));
     setTotalCount((prevTotal) => prevTotal - 1);
-  };
+  }, []);
 
-  useEffect(() => {
-    setHasPreviousPage(pageInfo?.hasPreviousPage || currentSkip > 0);
-    setHasNextPage(pageInfo?.hasNextPage);
-  }, [pageInfo, currentSkip]);
+  // Compute pagination based on variant
+  const computedHasPreviousPage = useMemo(() => {
+    if (variant === "static") {
+      // For static, calculate based on filteredData and currentSkip
+      return currentSkip > 0;
+    }
+    // For async, use pageInfo or currentSkip
+    return pageInfo?.hasPreviousPage || currentSkip > 0;
+  }, [variant, pageInfo?.hasPreviousPage, currentSkip]);
+
+  const computedHasNextPage = useMemo(() => {
+    if (variant === "static") {
+      // For static, calculate based on filteredData length, currentSkip, and batchSize
+      return currentSkip + batchSize < filteredData.length;
+    }
+    // For async, use pageInfo
+    return pageInfo?.hasNextPage || false;
+  }, [
+    variant,
+    pageInfo?.hasNextPage,
+    currentSkip,
+    batchSize,
+    filteredData.length,
+  ]);
+
+  // useEffect(() => {
+  //   // Update state values for both variants
+  //   setHasPreviousPage(computedHasPreviousPage);
+  //   setHasNextPage(computedHasNextPage);
+  // }, [computedHasPreviousPage, computedHasNextPage]);
 
   useEffect(() => {
     if (variant === "async") {
@@ -209,7 +257,7 @@ export const FlexTableProvider = ({
     } else {
       handleStaticData();
     }
-  }, [query, variables, variant]);
+  }, [query, variables, variant, fetchData, handleStaticData]);
 
   return (
     <FlexTableContext.Provider
@@ -217,7 +265,7 @@ export const FlexTableProvider = ({
         batchSize,
         setBatchSize,
         error,
-        filterOperators,
+        filterOperators: memoizedFilterOperators,
         isLoading,
         pageInfo,
         rows,
@@ -229,8 +277,8 @@ export const FlexTableProvider = ({
         onAddRow,
         onEditRow,
         onDeleteRow,
-        hasNextPage,
-        hasPreviousPage,
+        hasNextPage: computedHasNextPage,
+        hasPreviousPage: computedHasPreviousPage,
         useTranslations,
       }}
     >

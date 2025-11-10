@@ -38,14 +38,14 @@ export const TablePagination = ({
         {t("paginationText", { pageStart, pageEnd, totalCount })}
       </span>
       <button
-        className="hover:cursor-pointer disabled:opacity-50"
+        className="hover:cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
         onClick={onPrevious}
         disabled={!hasPreviousPage}
       >
         <MdNavigateBefore size={30} />
       </button>
       <button
-        className="hover:cursor-pointer disabled:opacity-50"
+        className="hover:cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
         onClick={onNext}
         disabled={!hasNextPage}
       >
