@@ -8,14 +8,8 @@ export const FlexTableSearch = ({
   debounceTime = 300,
   ...props
 }) => {
-  const {
-    variables,
-    setVariables,
-    setCurrentSkip,
-    useTranslations,
-    filterOperators,
-    mode,
-  } = useFlexTable();
+  const { variables, setVariables, setCurrentSkip, filterOperators, mode } =
+    useFlexTable();
 
   if (!fields || fields.length === 0) {
     throw new Error("The param 'fields' must be an array of strings");
@@ -23,7 +17,6 @@ export const FlexTableSearch = ({
 
   const [search, setSearch] = useState("");
   const debounceTimerRef = useRef(null);
-  const t = useTranslations("FlexTables.search");
 
   const searchHandler = (e) => {
     const searchString = e.target.value;
@@ -65,7 +58,6 @@ export const FlexTableSearch = ({
   return (
     <input
       type="text"
-      placeholder={t("search")}
       defaultValue={search}
       onChange={searchHandler}
       className={className}

@@ -47,28 +47,20 @@ export const FlexTableProvider = ({
   const [allData, setAllData] = useState([]);
   const [filteredData, setFilteredData] = useState([]);
 
-  // Memoize filterOperators to prevent unnecessary re-renders
-  const memoizedFilterOperators = useMemo(
-    () => filterOperators,
-    [filterOperators]
-  );
-
   const populateFilter = useCallback(() => {
     let newFilter = variables?.filter || {};
     if (newFilter && Object.keys(newFilter).length > 0) {
       if (
-        newFilter[memoizedFilterOperators.AND] &&
-        Array.isArray(newFilter[memoizedFilterOperators.AND])
+        newFilter[filterOperators.AND] &&
+        Array.isArray(newFilter[filterOperators.AND])
       ) {
-        newFilter[memoizedFilterOperators.AND].push(
-          ...newFilter[memoizedFilterOperators.AND]
-        );
+        newFilter[filterOperators.AND].push(...newFilter[filterOperators.AND]);
       } else {
         newFilter = newFilter;
       }
     }
     return newFilter;
-  }, [variables?.filter, memoizedFilterOperators.AND]);
+  }, [variables?.filter, filterOperators.AND]);
 
   const stringComparison = useCallback((value, searchString) => {
     if (
@@ -89,16 +81,23 @@ export const FlexTableProvider = ({
   const applyStaticFilter = useCallback(
     (data, filter) => {
       if (filter) {
-        return data.filter((item) => {
-          return filter.or.some((orFilter) => {
-            return Object.keys(orFilter).some((key) => {
-              const keys = key.split(".");
-              const value = keys.reduce((acc, key) => acc[key], item);
-              const searchString = orFilter[key]?.contains.toLowerCase();
-              return stringComparison(value, searchString);
+        if (
+          filter &&
+          filter[filterOperators.OR] &&
+          Array.isArray(filter[filterOperators.OR])
+        ) {
+          return data.filter((item) => {
+            return filter[filterOperators.OR].some((orFilter) => {
+              return Object.keys(orFilter).some((key) => {
+                const keys = key.split(".");
+                const value = keys.reduce((acc, key) => acc[key], item);
+                const searchString = orFilter[key]?.contains?.toLowerCase();
+                if (!searchString) return false;
+                return stringComparison(value, searchString);
+              });
             });
           });
-        });
+        }
       }
       return data;
     },
@@ -134,6 +133,13 @@ export const FlexTableProvider = ({
     return newAllData;
   }, [query]);
 
+  const applyStaticPagination = useCallback(
+    (data, currentSkip, batchSize) => {
+      return data.slice(currentSkip, currentSkip + batchSize);
+    },
+    [currentSkip, batchSize]
+  );
+
   const handleStaticData = useCallback(async () => {
     try {
       let newAllData;
@@ -152,7 +158,7 @@ export const FlexTableProvider = ({
       const sortedData = applyStaticSorting(newAllData, variables?.orderBy);
       const newFilteredData = applyStaticFilter(sortedData, variables?.filter);
 
-      setRows(newFilteredData.slice(currentSkip, currentSkip + batchSize));
+      setRows(applyStaticPagination(newFilteredData, currentSkip, batchSize));
 
       setFilteredData(newFilteredData);
       setTotalCount(newFilteredData.length);
@@ -171,6 +177,7 @@ export const FlexTableProvider = ({
     fetchStaticData,
     applyStaticSorting,
     applyStaticFilter,
+    applyStaticPagination,
   ]);
 
   const fetchData = useCallback(async () => {
@@ -265,7 +272,7 @@ export const FlexTableProvider = ({
         batchSize,
         setBatchSize,
         error,
-        filterOperators: memoizedFilterOperators,
+        filterOperators,
         isLoading,
         pageInfo,
         rows,
