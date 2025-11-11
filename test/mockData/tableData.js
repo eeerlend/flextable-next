@@ -1,7 +1,16 @@
 export const generatePersonData = (count) => {
-  return Array.from({ length: count }, (_, index) => ({
-    id: index + 1,
-    name: `Name ${index + 1}`,
-    email: `email${index + 1}@example.com`,
-  }));
+  let counter = 0;
+  const data = Array.from({ length: count }, (_, index) => {
+    counter++;
+    return {
+      id: counter,
+      name: `Name ${counter}`,
+      email: `email${counter}@example.com`,
+    };
+  });
+
+  return [
+    ...data,
+    { id: counter + 1, name: "Erlend", email: "erlend@example.com" },
+  ];
 };

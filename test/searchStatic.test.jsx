@@ -90,14 +90,12 @@ describe("Search (static)", () => {
 
     const searchInput = screen.getByPlaceholderText("Search");
 
-    await act(async () => {
-      fireEvent.change(searchInput, { target: { value: "name 11" } });
-    });
+    fireEvent.change(searchInput, { target: { value: "erlend" } });
 
     // Wait for initial page to load
     await waitFor(() => {
       expect(screen.queryByText("Name 1")).not.toBeInTheDocument();
-      expect(screen.queryByText("Name 11")).toBeInTheDocument();
+      expect(screen.queryByText("Erlend")).toBeInTheDocument();
     });
   });
 });
