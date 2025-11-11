@@ -22,6 +22,7 @@ export const FlexTableProvider = ({
   useTranslations,
   variant = "async",
   query,
+  queryParams = {},
 }) => {
   if (!query || typeof query !== "function") {
     throw new Error("The param 'query' must be a function");
@@ -127,9 +128,9 @@ export const FlexTableProvider = ({
 
   const fetchStaticData = useCallback(async () => {
     setIsLoading(true);
-    const data = await query();
+    const data = await query({ ...variables, ...queryParams });
 
-    const newAllData = data || [];
+    const newAllData = data.nodes || data;
     return newAllData;
   }, [query]);
 
@@ -189,6 +190,7 @@ export const FlexTableProvider = ({
         ...variables,
         filter: newFilter,
         first: variables?.first || batchSize,
+        ...queryParams,
       });
 
       setRows(data?.nodes || []);
