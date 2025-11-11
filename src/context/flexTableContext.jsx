@@ -182,6 +182,7 @@ export const FlexTableProvider = ({
 
   const fetchData = useCallback(async () => {
     try {
+      setIsLoading(true);
       const newFilter = populateFilter();
 
       const data = await query({
