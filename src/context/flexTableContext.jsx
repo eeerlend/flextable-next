@@ -150,13 +150,13 @@ export const FlexTableProvider = ({
         newAllData = allData;
       }
 
-      setPageInfo({
-        hasPreviousPage: currentSkip > 0,
-        hasNextPage: currentSkip + batchSize < newAllData.length,
-      });
-
       const sortedData = applyStaticSorting(newAllData, variables?.orderBy);
       const newFilteredData = applyStaticFilter(sortedData, variables?.filter);
+
+      setPageInfo({
+        hasPreviousPage: currentSkip > 0,
+        hasNextPage: currentSkip + batchSize < newFilteredData.length,
+      });
 
       setRows(applyStaticPagination(newFilteredData, currentSkip, batchSize));
 
