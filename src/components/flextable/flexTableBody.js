@@ -15,7 +15,7 @@ export const FlexTableBody = ({ children, loader, ...props }) => {
 
   if (error) {
     return (
-      <TableBody className="relative" {...props}>
+      <TableBody className="relative p-20" {...props}>
         Error: {error}
       </TableBody>
     );
@@ -23,11 +23,11 @@ export const FlexTableBody = ({ children, loader, ...props }) => {
 
   // if initial load
   return isLoading && rows.length === 0 ? (
-    <TableBody className="relative" {...props}>
+    <TableBody className="relative p-20" {...props}>
       <Loader />
     </TableBody>
   ) : isLoading && rows.length > 0 ? (
-    <TableBody className="relative" {...props}>
+    <TableBody className="relative p-20" {...props}>
       <Loader />
       {children}
     </TableBody>
