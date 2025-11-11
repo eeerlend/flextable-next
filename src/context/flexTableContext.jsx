@@ -76,7 +76,7 @@ export const FlexTableProvider = ({
       return true;
     }
     const similarity = stringSimilarity(value, searchString);
-    return similarity > 0.6;
+    return similarity > 0.5;
   }, []);
 
   const applyStaticFilter = useCallback(
@@ -94,6 +94,7 @@ export const FlexTableProvider = ({
                 const value = keys.reduce((acc, key) => acc[key], item);
                 const searchString = orFilter[key]?.contains?.toLowerCase();
                 if (!searchString) return false;
+
                 return stringComparison(value, searchString);
               });
             });
@@ -112,8 +113,14 @@ export const FlexTableProvider = ({
 
       const direction = orderBy[keyString];
       return [...data].sort((a, b) => {
-        const aValue = keys.reduce((acc, key) => acc[key], a);
-        const bValue = keys.reduce((acc, key) => acc[key], b);
+        const aValue = keys.reduce((acc, key) => acc?.[key], a);
+        const bValue = keys.reduce((acc, key) => acc?.[key], b);
+
+        // Handle null/undefined values - always put them last
+        if (aValue == null && bValue == null) return 0;
+        if (aValue == null) return 1; // a is null, put it after b
+        if (bValue == null) return -1; // b is null, put it after a (a comes first)
+
         return direction === "asc"
           ? aValue > bValue
             ? 1
