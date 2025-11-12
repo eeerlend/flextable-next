@@ -1,4 +1,5 @@
 "use client";
+
 import {
   createContext,
   useCallback,
@@ -11,6 +12,22 @@ import { stringSimilarity } from "string-similarity-js";
 
 const FlexTableContext = createContext();
 
+/**
+ * @function FlexTableProvider
+ * @description Provides the context for the FlexTable component
+ * @param {Object} props
+ * @param {number} [props.defaultBatchSize=25]
+ * @param {React.ReactNode} props.children
+ * @param {Object} [props.filterOperators]
+ * @param {string} props.filterOperators.AND
+ * @param {string} props.filterOperators.OR
+ * @param {string} props.filterOperators.NOT
+ * @param {Function} props.useTranslations
+ * @param {string} [props.variant="async"]
+ * @param {Function} props.query
+ * @param {Object} [props.queryParams={}]
+ * @returns {React.ReactNode}
+ */
 export const FlexTableProvider = ({
   defaultBatchSize = 25,
   children,
@@ -303,7 +320,11 @@ export const FlexTableProvider = ({
     </FlexTableContext.Provider>
   );
 };
-
+/**
+ * @function useFlexTable
+ * @description Returns the context for the FlexTableProvider
+ * @returns {FlexTableContext}
+ */
 export const useFlexTable = () => {
   const context = useContext(FlexTableContext);
   if (!context) {
