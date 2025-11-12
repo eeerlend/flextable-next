@@ -1,5 +1,5 @@
 import { build } from "esbuild";
-import { readdir, stat, mkdir, copyFile } from "fs/promises";
+import { readdir, stat, mkdir, readFile, writeFile } from "fs/promises";
 import { join, dirname, relative } from "path";
 import { fileURLToPath } from "url";
 import { existsSync } from "fs";
@@ -28,6 +28,23 @@ async function getAllJsFiles(dir, fileList = []) {
   return fileList;
 }
 
+// Add .js extensions to relative imports/exports
+function addJsExtensions(content, filePath) {
+  // Match relative imports/exports: from "./path" or from "../path" or export * from "./path"
+  // Exclude paths that already have extensions or are node_modules
+  const relativeImportRegex =
+    /(from\s+['"]|export\s+\*\s+from\s+['"])(\.\.?\/[^'"]+)(['"])/g;
+
+  return content.replace(relativeImportRegex, (match, prefix, path, suffix) => {
+    // Skip if already has an extension
+    if (/\.[^./]+$/.test(path)) {
+      return match;
+    }
+    // Add .js extension
+    return `${prefix}${path}.js${suffix}`;
+  });
+}
+
 async function buildPackage() {
   // Clean dist directory
   if (existsSync(distDir)) {
@@ -42,7 +59,9 @@ async function buildPackage() {
   // Build each file with esbuild
   const buildPromises = jsFiles.map(async (filePath) => {
     const relativePath = relative(srcDir, filePath);
-    const outputPath = join(distDir, relativePath);
+    // Force all output files to have .js extension
+    const relativePathWithoutExt = relativePath.replace(/\.(js|jsx)$/, "");
+    const outputPath = join(distDir, `${relativePathWithoutExt}.js`);
     const outputDir = dirname(outputPath);
 
     // Ensure output directory exists
@@ -64,6 +83,11 @@ async function buildPackage() {
       target: "es2020",
       logLevel: "silent",
     });
+
+    // Post-process: add .js extensions to relative imports
+    const content = await readFile(outputPath, "utf-8");
+    const updatedContent = addJsExtensions(content, outputPath);
+    await writeFile(outputPath, updatedContent, "utf-8");
   });
 
   await Promise.all(buildPromises);
