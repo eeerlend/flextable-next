@@ -6,9 +6,10 @@ export const FlexTableSearch = ({
   fields = [],
   className = "",
   debounceTime = 300,
+  mode,
   ...props
 }) => {
-  const { variables, setVariables, setCurrentSkip, filterOperators, mode } =
+  const { variables, setVariables, setCurrentSkip, filterOperators } =
     useFlexTable();
 
   if (!fields || fields.length === 0) {
