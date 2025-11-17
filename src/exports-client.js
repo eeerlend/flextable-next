@@ -22,3 +22,6 @@ export * from "./components/table/tableHeader";
 export * from "./components/table/tablePagination";
 
 export * from "./components/filters/dateRangeFilter";
+export * from "./components/filters/stringFilter";
+export * from "./components/filters/stringFilterMany";
+export * from "./components/filters/customFilter";

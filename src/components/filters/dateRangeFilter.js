@@ -28,9 +28,11 @@ export const DateRangeFilter = ({ label, fieldName, className = "" }) => {
 
   return (
     <div className="flextable-dateRangeFilter">
-      <label htmlFor="dateFrom" className="flextable-dateRangeFilterLabel">
-        {label}
-      </label>
+      {label && (
+        <label htmlFor="dateFrom" className="flextable-dateRangeFilterLabel">
+          {label}
+        </label>
+      )}
 
       <div className={`flextable-dateRangeFilterInputs ${className}`}>
         <input
