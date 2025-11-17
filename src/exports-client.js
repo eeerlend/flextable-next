@@ -20,3 +20,5 @@ export * from "./components/table/tableRow";
 export * from "./components/table/tableCell";
 export * from "./components/table/tableHeader";
 export * from "./components/table/tablePagination";
+
+export * from "./components/filters/dateRangeFilter";

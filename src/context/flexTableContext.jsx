@@ -61,6 +61,7 @@ export const FlexTableProvider = ({
   const [variables, setVariables] = useState({});
   const [batchSize, setBatchSize] = useState(defaultBatchSize);
   const [currentSkip, setCurrentSkip] = useState(0);
+
   // Static data
   const [allData, setAllData] = useState([]);
   const [filteredData, setFilteredData] = useState([]);
@@ -209,7 +210,6 @@ export const FlexTableProvider = ({
     try {
       setIsLoading(true);
       const newFilter = populateFilter();
-
       const data = await query({
         ...variables,
         filter: newFilter,
@@ -252,6 +252,13 @@ export const FlexTableProvider = ({
   const onDeleteRow = useCallback((deletedRowId) => {
     setRows((prevRows) => prevRows.filter((row) => row.id !== deletedRowId));
     setTotalCount((prevTotal) => prevTotal - 1);
+  }, []);
+
+  const addFilter = useCallback((filter) => {
+    setVariables((prevVariables) => ({
+      ...prevVariables,
+      filter: { ...prevVariables.filter, ...filter },
+    }));
   }, []);
 
   // Compute pagination based on variant
@@ -314,6 +321,7 @@ export const FlexTableProvider = ({
         hasNextPage: computedHasNextPage,
         hasPreviousPage: computedHasPreviousPage,
         useTranslations,
+        addFilter,
       }}
     >
       {children}
