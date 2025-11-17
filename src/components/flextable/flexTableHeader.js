@@ -53,7 +53,7 @@ export const FlexTableHeader = ({
   return (
     <TableHeader className={className}>
       <div
-        className={`flex flex-row items-center justify-between gap-2 py-2 cursor-pointer whitespace-nowrap ${
+        className={`flextable-header flex flex-row items-center justify-between gap-2 py-2 cursor-pointer whitespace-nowrap ${
           isSorted ? "text-brand" : "text-muted hover:text-brand"
         }`}
         onClick={sortField ? handleSort : null}

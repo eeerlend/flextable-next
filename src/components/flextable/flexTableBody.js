@@ -3,7 +3,12 @@ import { RiLoader4Line } from "react-icons/ri";
 import { useFlexTable } from "../../context/flexTableContext";
 import { TableBody } from "../table/tableBody";
 
-export const FlexTableBody = ({ children, loader, ...props }) => {
+export const FlexTableBody = ({
+  children,
+  loader,
+  className = "",
+  ...props
+}) => {
   const { isLoading, rows, error } = useFlexTable();
 
   const defaultLoader = () => (
@@ -32,6 +37,8 @@ export const FlexTableBody = ({ children, loader, ...props }) => {
       {children}
     </TableBody>
   ) : (
-    <TableBody {...props}>{children}</TableBody>
+    <TableBody className={`flextable-body ${className}`} {...props}>
+      {children}
+    </TableBody>
   );
 };

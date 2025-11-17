@@ -8,7 +8,10 @@ export const FlexTable = ({
 }) => {
   const compactClass = compact ? "compact" : "";
   return (
-    <Table className={`relative ${className} ${compactClass}`} {...props}>
+    <Table
+      className={`flextable-table relative ${className} ${compactClass}`}
+      {...props}
+    >
       {children}
     </Table>
   );

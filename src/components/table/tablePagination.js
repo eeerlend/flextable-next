@@ -19,33 +19,35 @@ export const TablePagination = ({
   const { useTranslations } = useFlexTable();
   const t = useTranslations("FlexTables.pagination");
   return (
-    <div
-      className={`flex flex-row gap-2 whitespace-nowrap items-center ${className}`}
-      {...props}
-    >
-      <span>{t("pageSize")}</span>
+    <div className={`flextable-pagination`} {...props}>
+      <span className="flextable-pagination-pageSize">{t("pageSize")}</span>
       <select
+        className="flextable-pagination-pageSizeSelect"
         value={pageSize}
         onChange={(e) => onPageSizeChange(Number(e.target.value))}
       >
         {pageSizeOptions.map((size) => (
-          <option key={size} value={size}>
+          <option
+            className="flextable-pagination-pageSizeOption"
+            key={size}
+            value={size}
+          >
             {size}
           </option>
         ))}
       </select>
-      <span className="hidden md:block">
+      <span className="flextable-pagination-pageInfoText">
         {t("paginationText", { pageStart, pageEnd, totalCount })}
       </span>
       <button
-        className="hover:cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+        className="flextable-pagination-previousButton"
         onClick={onPrevious}
         disabled={!hasPreviousPage}
       >
         <MdNavigateBefore size={30} />
       </button>
       <button
-        className="hover:cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+        className="flextable-pagination-nextButton"
         onClick={onNext}
         disabled={!hasNextPage}
       >

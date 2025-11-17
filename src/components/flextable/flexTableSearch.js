@@ -4,7 +4,6 @@ import { useFlexTable } from "../../context/flexTableContext";
 
 export const FlexTableSearch = ({
   fields = [],
-  className = "",
   debounceTime = 300,
   mode,
   ...props
@@ -59,9 +58,9 @@ export const FlexTableSearch = ({
   return (
     <input
       type="text"
+      className="flextable-search-input"
       defaultValue={search}
       onChange={searchHandler}
-      className={className}
       {...props}
     />
     // <FormInputText

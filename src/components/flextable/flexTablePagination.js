@@ -2,7 +2,7 @@
 import { useFlexTable } from "../../context/flexTableContext";
 import { TablePagination } from "../table/tablePagination";
 
-export const FlexTablePagination = ({ className = "" }) => {
+export const FlexTablePagination = () => {
   const {
     batchSize,
     setBatchSize,
@@ -39,7 +39,6 @@ export const FlexTablePagination = ({ className = "" }) => {
   // Page size
   return (
     <TablePagination
-      className={className}
       pageStart={currentSkip}
       pageEnd={Math.min(currentSkip + batchSize, totalCount)}
       totalCount={totalCount}

@@ -1,10 +1,7 @@
 "use client";
 export const FlexTableLane = ({ children, className = "", ...props }) => {
   return (
-    <div
-      className={`flex items-center justify-end gap-4 ${className}`}
-      {...props}
-    >
+    <div className={`flextable-lane ${className}`} {...props}>
       {children}
     </div>
   );
