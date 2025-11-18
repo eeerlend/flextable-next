@@ -1,6 +1,6 @@
 {
   "name": "@eeerlend/flextable-next",
-  "version": "1.7.2",
+  "version": "1.8.2",
   "description": "A flexible table component for Next.js",
   "license": "ISC",
   "author": "Erlend Mongstad",
