@@ -3,17 +3,17 @@ import Select from "react-select";
 import { useFlexTable } from "../../context/flexTableContext";
 import { useState } from "react";
 
-export const StringFilterMany = ({ label, fieldName, options }) => {
-  const { variables, addFilter } = useFlexTable();
+export const StringFilterMany = ({ name, label, fieldName, options }) => {
+  const { addFilter, isFilterActive } = useFlexTable();
   const [selectedOptions, setSelectedOptions] = useState([]);
 
-  const isActive = variables?.filter?.[fieldName]?.equals?.length > 0;
+  const isActive = isFilterActive(name);
 
   const handleChange = (selected) => {
     setSelectedOptions(selected);
 
     const selectedValues = selected.map((option) => option.value);
-    addFilter({
+    addFilter(name, {
       [fieldName]:
         selectedValues && selectedValues.length > 0
           ? {

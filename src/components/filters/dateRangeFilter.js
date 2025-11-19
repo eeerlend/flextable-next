@@ -1,14 +1,14 @@
 "use client";
 import { useFlexTable } from "../../context/flexTableContext";
 
-export const DateRangeFilter = ({ label, fieldName, className = "" }) => {
+export const DateRangeFilter = ({ name, label, fieldName, className = "" }) => {
   const { variables, addFilter } = useFlexTable();
 
   const toggleFilter = (filter) => {
     const existingFilter = variables?.filter?.[fieldName];
     const { startDate, endDate } = filter;
 
-    addFilter({
+    addFilter(name, {
       [fieldName]: {
         gte:
           startDate !== undefined

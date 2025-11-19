@@ -61,25 +61,27 @@ export const FlexTableProvider = ({
   const [variables, setVariables] = useState({});
   const [batchSize, setBatchSize] = useState(defaultBatchSize);
   const [currentSkip, setCurrentSkip] = useState(0);
+  const [activeFilters, setActiveFilters] = useState({});
+  const [activeSearch, setActiveSearch] = useState({});
 
   // Static data
   const [allData, setAllData] = useState([]);
   const [filteredData, setFilteredData] = useState([]);
 
   const populateFilter = useCallback(() => {
-    let newFilter = variables?.filter || {};
-    if (newFilter && Object.keys(newFilter).length > 0) {
-      if (
-        newFilter[filterOperators.AND] &&
-        Array.isArray(newFilter[filterOperators.AND])
-      ) {
-        newFilter[filterOperators.AND].push(...newFilter[filterOperators.AND]);
-      } else {
-        newFilter = newFilter;
-      }
+    // activeFilters is an object with the filter name as the key and the filter as the value
+    const newFilter = { [filterOperators.AND]: [] };
+    Object.values(activeFilters).forEach((filter) => {
+      newFilter[filterOperators.AND].push(filter);
+    });
+
+    // apply search filter
+    if (activeSearch) {
+      newFilter[filterOperators.AND].push(activeSearch);
     }
+
     return newFilter;
-  }, [variables?.filter, filterOperators.AND]);
+  }, [activeFilters, activeSearch]);
 
   const stringComparison = useCallback((value, searchString) => {
     if (
@@ -97,31 +99,97 @@ export const FlexTableProvider = ({
     return similarity > 0.5;
   }, []);
 
-  const applyStaticFilter = useCallback(
-    (data, filter) => {
-      if (filter) {
-        if (
-          filter &&
-          filter[filterOperators.OR] &&
-          Array.isArray(filter[filterOperators.OR])
-        ) {
-          return data.filter((item) => {
-            return filter[filterOperators.OR].some((orFilter) => {
-              return Object.keys(orFilter).some((key) => {
-                const keys = key.split(".");
-                const value = keys.reduce((acc, key) => acc[key], item);
-                const searchString = orFilter[key]?.contains?.toLowerCase();
-                if (!searchString) return false;
+  const applyDirectFilter = useCallback((item, inFilter, key) => {
+    const keys = key.split(".");
+    const value = keys.reduce((acc, key) => acc[key], item);
+    const currentFilter = inFilter[key];
+    if (currentFilter?.equals) {
+      return value === currentFilter.equals;
+    } else if (currentFilter?.contains) {
+      const searchString = currentFilter?.contains?.toLowerCase();
+      if (!searchString) return false;
+      return stringComparison(value, searchString);
+    }
+    return false;
+  }, []);
 
-                return stringComparison(value, searchString);
+  const applyStaticFilter = useCallback(
+    (data) => {
+      let rows = data;
+
+      if (activeFilters) {
+        Object.values(activeFilters).forEach((filter) => {
+          // handle or filters, and filters and direct filters
+          if (!filter[filterOperators.AND] && !filter[filterOperators.OR]) {
+            rows = rows.filter((item) => {
+              return Object.keys(filter).some((key) => {
+                return applyDirectFilter(item, filter, key);
               });
             });
+          } else if (filter[filterOperators.OR]) {
+            rows = rows.filter((item) => {
+              return filter[filterOperators.OR].some((orFilter) => {
+                return Object.keys(orFilter).some((key) => {
+                  return applyDirectFilter(item, orFilter, key);
+                });
+              });
+            });
+          } else if (filter[filterOperators.AND]) {
+            rows = rows.filter((item) => {
+              return filter[filterOperators.AND].every((andFilter) => {
+                return Object.keys(andFilter).every((key) => {
+                  return applyDirectFilter(item, andFilter, key);
+                });
+              });
+            });
+          }
+        });
+      }
+
+      // apply search filter
+      if (activeSearch) {
+        if (Object.keys(activeSearch).length > 0) {
+          rows = rows.filter((item) => {
+            return (
+              activeSearch[filterOperators.OR] &&
+              activeSearch[filterOperators.OR].some((orFilter) => {
+                return Object.keys(orFilter).some((key) => {
+                  const keys = key.split(".");
+                  const value = keys.reduce((acc, key) => acc[key], item);
+                  const searchString = orFilter[key]?.contains?.toLowerCase();
+                  if (!searchString) return false;
+
+                  return stringComparison(value, searchString);
+                });
+              })
+            );
           });
         }
       }
-      return data;
+
+      // if (filter && filter[filterOperators.AND]) {
+      //   if (
+      //     filter &&
+      //     filter[filterOperators.OR] &&
+      //     Array.isArray(filter[filterOperators.OR])
+      //   ) {
+      //     return data.filter((item) => {
+      //       return filter[filterOperators.OR].some((orFilter) => {
+      //         return Object.keys(orFilter).some((key) => {
+      //           const keys = key.split(".");
+      //           const value = keys.reduce((acc, key) => acc[key], item);
+      //           const searchString = orFilter[key]?.contains?.toLowerCase();
+      //           if (!searchString) return false;
+
+      //           return stringComparison(value, searchString);
+      //         });
+      //       });
+      //     });
+      //   }
+      // }
+      return rows;
     },
-    [stringComparison]
+    [stringComparison, activeFilters, activeSearch]
   );
 
   const applyStaticSorting = useCallback((data, orderBy) => {
@@ -177,8 +245,7 @@ export const FlexTableProvider = ({
       }
 
       const sortedData = applyStaticSorting(newAllData, variables?.orderBy);
-      const newFilteredData = applyStaticFilter(sortedData, variables?.filter);
-
+      const newFilteredData = applyStaticFilter(sortedData);
       setPageInfo({
         hasPreviousPage: currentSkip > 0,
         hasNextPage: currentSkip + batchSize < newFilteredData.length,
@@ -201,6 +268,8 @@ export const FlexTableProvider = ({
     variables?.orderBy,
     variables?.filter,
     fetchStaticData,
+    activeFilters,
+    activeSearch,
     applyStaticSorting,
     applyStaticFilter,
     applyStaticPagination,
@@ -236,7 +305,7 @@ export const FlexTableProvider = ({
     } finally {
       setIsLoading(false);
     }
-  }, [query, variables, batchSize, populateFilter]);
+  }, [query, variables, activeFilters, batchSize, populateFilter]);
 
   const onAddRow = useCallback((newRow) => {
     setRows((prevRows) => [newRow, ...prevRows]);
@@ -254,12 +323,48 @@ export const FlexTableProvider = ({
     setTotalCount((prevTotal) => prevTotal - 1);
   }, []);
 
-  const addFilter = useCallback((filter) => {
-    setVariables((prevVariables) => ({
-      ...prevVariables,
-      filter: { ...prevVariables.filter, ...filter },
-    }));
+  const setSearchFilter = useCallback((searchFilter) => {
+    setActiveSearch(searchFilter);
+    // setVariables((prevVariables) => ({
+    //   ...prevVariables,
+    //   filter: { ...prevVariables.filter, ...searchFilter },
+    // }));
   }, []);
+
+  const addFilter = useCallback((name, filter) => {
+    setActiveFilters((prevActiveFilters) => ({
+      ...prevActiveFilters,
+      [name]: filter,
+    }));
+    // const newActiveFilterNames = [...activeFilterNames, name];
+    // setActiveFilterNames(newActiveFilterNames);
+    // setVariables((prevVariables) => {
+    //   const newFilter = { ...prevVariables.filter, ...filter };
+    //   return {
+    //     ...prevVariables,
+    //     filter: newFilter,
+    //   };
+    // });
+  }, []);
+
+  const removeFilter = useCallback(
+    (name) => {
+      setActiveFilters((prevActiveFilters) => {
+        const newActiveFilters = { ...prevActiveFilters };
+        delete newActiveFilters[name];
+        return newActiveFilters;
+      });
+    },
+    [activeFilters]
+  );
+
+  const isFilterActive = useCallback(
+    (name) => {
+      const filterNames = Object.keys(activeFilters);
+      return filterNames.includes(name);
+    },
+    [activeFilters]
+  );
 
   // Compute pagination based on variant
   const computedHasPreviousPage = useMemo(() => {
@@ -322,6 +427,9 @@ export const FlexTableProvider = ({
         hasPreviousPage: computedHasPreviousPage,
         useTranslations,
         addFilter,
+        removeFilter,
+        isFilterActive,
+        setSearchFilter,
       }}
     >
       {children}

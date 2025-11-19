@@ -1,21 +1,14 @@
 import { useFlexTable } from "../../context/flexTableContext";
 
-export const CustomFilter = ({
-  fieldName,
-  filterQuery = {},
-  children,
-  ...props
-}) => {
-  const { variables, addFilter } = useFlexTable();
-  const isActive =
-    JSON.stringify(variables?.filter?.[fieldName]) ===
-    JSON.stringify(filterQuery);
+export const CustomFilter = ({ name, query = {}, children, ...props }) => {
+  const { addFilter, removeFilter, isFilterActive } = useFlexTable();
+  const isActive = isFilterActive(name);
 
   const handleClick = () => {
     if (isActive) {
-      addFilter({ [fieldName]: undefined });
+      removeFilter(name, query);
     } else {
-      addFilter({ [fieldName]: filterQuery });
+      addFilter(name, query);
     }
   };
 

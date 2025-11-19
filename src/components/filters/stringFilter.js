@@ -1,32 +1,17 @@
 import Select from "react-select";
 import { useFlexTable } from "../../context/flexTableContext";
 
-export const StringFilter = ({ label, fieldName, options }) => {
-  const { variables, addFilter } = useFlexTable();
-
-  const isActive = variables?.filter?.[fieldName]?.equals !== undefined;
-
-  const change = (value) => {
-    if (value === "") {
-      addFilter({
-        [fieldName]: { equals: "" },
-      });
-    } else {
-      addFilter({
-        [fieldName]: {
-          equals: value && value !== "null" ? value : undefined,
-        },
-      });
-    }
-  };
+export const StringFilter = ({ name, label, fieldName, options }) => {
+  const { addFilter, isFilterActive } = useFlexTable();
+  const isActive = isFilterActive(name);
 
   const handleChange = (selected) => {
     if (selected?.value === "") {
-      addFilter({
+      addFilter(name, {
         [fieldName]: { equals: "" },
       });
     } else {
-      addFilter({
+      addFilter(name, {
         [fieldName]: {
           equals:
             selected && selected?.value !== "null" ? selected.value : undefined,

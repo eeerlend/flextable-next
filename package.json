@@ -23,7 +23,7 @@
     "build": "tsup",
     "build:old": "node build.js",
     "dev:legacy": "nodemon --watch src --ext js,jsx,ts,tsx --exec \"npm run build:old\"",
-    "dev": "nodemon --watch src --ext js,jsx,ts,tsx --exec \"npm run build\"",
+    "dev": "tsup --watch",
     "prepublishOnly": "npm run build",
     "pretest": "npm run build",
     "test": "vitest",

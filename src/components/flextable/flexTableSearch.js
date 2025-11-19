@@ -8,7 +8,7 @@ export const FlexTableSearch = ({
   mode,
   ...props
 }) => {
-  const { variables, setVariables, setCurrentSkip, filterOperators } =
+  const { variables, setSearchFilter, setCurrentSkip, filterOperators } =
     useFlexTable();
 
   if (!fields || fields.length === 0) {
@@ -40,8 +40,7 @@ export const FlexTableSearch = ({
         }
       });
 
-      const newVariables = { ...variables, filter: filter };
-      setVariables(newVariables);
+      setSearchFilter(filter);
       setCurrentSkip(0);
     }, debounceTime);
   };
@@ -63,11 +62,5 @@ export const FlexTableSearch = ({
       onChange={searchHandler}
       {...props}
     />
-    // <FormInputText
-    //   name="search"
-    //   placeholder={t("search")}
-    //   defaultValue={search}
-    //   onChange={searchHandler}
-    // />
   );
 };
