@@ -9,6 +9,9 @@ import {
   useState,
 } from "react";
 import { stringSimilarity } from "string-similarity-js";
+import { handleStringFilterStatic } from "../lib/handleStringFilterStatic.js";
+import { handleNumberFilterStatic } from "../lib/handleNumberFilterStatic.js";
+import { handleDateFilterStatic } from "../lib/handleDateFilterStatic.js";
 
 const FlexTableContext = createContext();
 
@@ -99,18 +102,38 @@ export const FlexTableProvider = ({
     return similarity > 0.5;
   }, []);
 
+  const detectType = useCallback((filter) => {
+    if (filter?.equals) {
+      return typeof filter?.equals === "string" ? "string" : "number";
+    } else if (filter?.contains) {
+      return typeof filter?.contains === "string" ? "string" : "number";
+    } else if (
+      filter?.before ||
+      filter?.after ||
+      filter?.lte ||
+      filter?.gte ||
+      filter?.lt ||
+      filter?.gt
+    ) {
+      return "date";
+    }
+    return typeof filter === "string" ? "string" : "number";
+  }, []);
+
   const applyDirectFilter = useCallback((item, inFilter, key) => {
     const keys = key.split(".");
     const value = keys.reduce((acc, key) => acc[key], item);
     const currentFilter = inFilter[key];
-    if (currentFilter?.equals) {
-      return value === currentFilter.equals;
-    } else if (currentFilter?.contains) {
-      const searchString = currentFilter?.contains?.toLowerCase();
-      if (!searchString) return false;
-      return stringComparison(value, searchString);
+    switch (detectType(currentFilter)) {
+      case "string":
+        return handleStringFilterStatic(value, currentFilter);
+      case "number":
+        return handleNumberFilterStatic(value, currentFilter);
+      case "date":
+        return handleDateFilterStatic(value, currentFilter);
+      default:
+        return false;
     }
-    return false;
   }, []);
 
   const applyStaticFilter = useCallback(
@@ -166,27 +189,6 @@ export const FlexTableProvider = ({
           });
         }
       }
-
-      // if (filter && filter[filterOperators.AND]) {
-      //   if (
-      //     filter &&
-      //     filter[filterOperators.OR] &&
-      //     Array.isArray(filter[filterOperators.OR])
-      //   ) {
-      //     return data.filter((item) => {
-      //       return filter[filterOperators.OR].some((orFilter) => {
-      //         return Object.keys(orFilter).some((key) => {
-      //           const keys = key.split(".");
-      //           const value = keys.reduce((acc, key) => acc[key], item);
-      //           const searchString = orFilter[key]?.contains?.toLowerCase();
-      //           if (!searchString) return false;
-
-      //           return stringComparison(value, searchString);
-      //         });
-      //       });
-      //     });
-      //   }
-      // }
       return rows;
     },
     [stringComparison, activeFilters, activeSearch]
