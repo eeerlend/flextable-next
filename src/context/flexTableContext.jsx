@@ -103,10 +103,8 @@ export const FlexTableProvider = ({
   }, []);
 
   const detectType = useCallback((filter) => {
-    if (filter?.equals) {
-      return typeof filter?.equals === "string" ? "string" : "number";
-    } else if (filter?.contains) {
-      return typeof filter?.contains === "string" ? "string" : "number";
+    if (typeof Object.values(filter)[0] === "number") {
+      return "number";
     } else if (
       filter?.before ||
       filter?.after ||
@@ -116,8 +114,9 @@ export const FlexTableProvider = ({
       filter?.gt
     ) {
       return "date";
+    } else {
+      return "string";
     }
-    return typeof filter === "string" ? "string" : "number";
   }, []);
 
   const applyDirectFilter = useCallback((item, inFilter, key) => {
@@ -142,7 +141,7 @@ export const FlexTableProvider = ({
 
       if (activeFilters) {
         Object.values(activeFilters).forEach((filter) => {
-          // handle or filters, and filters and direct filters
+          // handle OR filters, AND filters and direct filters
           if (!filter[filterOperators.AND] && !filter[filterOperators.OR]) {
             rows = rows.filter((item) => {
               return Object.keys(filter).some((key) => {
