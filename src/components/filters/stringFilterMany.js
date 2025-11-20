@@ -3,7 +3,13 @@ import Select from "react-select";
 import { useFlexTable } from "../../context/flexTableContext";
 import { useState } from "react";
 
-export const StringFilterMany = ({ name, label, fieldName, options }) => {
+export const StringFilterMany = ({
+  name,
+  label,
+  fieldName,
+  options,
+  formatOptionLabel,
+}) => {
   const { addFilter, isFilterActive } = useFlexTable();
   const [selectedOptions, setSelectedOptions] = useState([]);
 
@@ -48,6 +54,7 @@ export const StringFilterMany = ({ name, label, fieldName, options }) => {
         onChange={handleChange}
         value={selectedOptions}
         isMulti={true}
+        formatOptionLabel={formatOptionLabel}
       />
     </div>
   );
